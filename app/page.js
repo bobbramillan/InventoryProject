@@ -5,6 +5,10 @@ import { firestore } from '@/firebase';
 import { Box, Typography, Modal, Stack, TextField, Button } from '@mui/material';
 import { collection, query, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
+const capitalizeWords = (str) => {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+};
+
 export default function Home() {
   // state values
   const [inventory, setInventory] = useState([]);
@@ -29,6 +33,7 @@ export default function Home() {
 
   //add item or quantity function
   const addItem = async (item) => {
+    const capitalizedItem = capitalizeWords(item);
     const docRef = doc(collection(firestore, 'inventory'), item);
     const docSnap = await getDoc(docRef);
 
@@ -69,6 +74,7 @@ export default function Home() {
 
   const handleAddItem = () => {
     if (itemName.trim()) {
+      const capitalizedItem = capitalizeWords(itemName);
       addItem(itemName);
       setItemName('');
       handleClose();
