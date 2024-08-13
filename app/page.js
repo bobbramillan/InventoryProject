@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { firestore } from '@/firebase';
-import { Box, Typography, Modal, Stack, TextField, Button } from '@mui/material';
+import { Box, Typography, Modal, Stack, TextField, Button, Paper } from '@mui/material';
 import { collection, query, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 const capitalizeWords = (str) => {
@@ -10,13 +10,11 @@ const capitalizeWords = (str) => {
 };
 
 export default function Home() {
-  // state values
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // fetches and updates inventory from Firestore
   const updateInventory = async () => {
     const snapshot = query(collection(firestore, 'inventory'));
     const docs = await getDocs(snapshot);
@@ -28,10 +26,8 @@ export default function Home() {
       });
     });
     setInventory(inventoryList);
-    console.log(inventoryList); //debugs updated list
   };
 
-  //add item or quantity function
   const addItem = async (item) => {
     const capitalizedItem = capitalizeWords(item);
     const docRef = doc(collection(firestore, 'inventory'), item);
@@ -47,7 +43,6 @@ export default function Home() {
     await updateInventory();
   };
 
-  // remove item or decrease quantity function
   const removeItem = async (item) => {
     const docRef = doc(collection(firestore, 'inventory'), item);
     const docSnap = await getDoc(docRef);
@@ -68,13 +63,11 @@ export default function Home() {
     updateInventory();
   }, []);
 
-  // handles search, adding items
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const handleAddItem = () => {
     if (itemName.trim()) {
-      const capitalizedItem = capitalizeWords(itemName);
       addItem(itemName);
       setItemName('');
       handleClose();
@@ -85,7 +78,6 @@ export default function Home() {
     setSearchTerm(e.target.value.toLowerCase());
   };
 
-  //filter items based on search
   const filteredInventory = inventory.filter(item =>
     item.name.toLowerCase().includes(searchTerm)
   );
@@ -98,8 +90,12 @@ export default function Home() {
       flexDirection="column"
       justifyContent="center" 
       alignItems="center" 
-      gap={2}>
-
+      gap={4}
+      sx={{
+        backgroundColor: '#f5f5f5',
+        padding: '2rem',
+      }}
+    >
       {/* Modal for adding new items */}
       <Modal open={open} onClose={handleClose}>
         <Box
@@ -108,32 +104,34 @@ export default function Home() {
           left="50%"
           transform="translate(-50%, -50%)"
           width={400}
-          bgcolor="white"
-          border="2px solid #000"
+          bgcolor="background.paper"
+          borderRadius="12px"
           boxShadow={24}
           p={4}
           display="flex"
           flexDirection="column"
-          gap={3}
-          sx={{
-            transform: "translate(-50%, -50%)"
-          }}
+          gap={2}
         >
-          <Typography variant="h6">Add Item</Typography>
-          <Stack width="100%" direction="row" spacing={2}>
+          <Typography variant="h6" align="center" gutterBottom>
+            Add New Item
+          </Typography>
+          <Stack direction="row" spacing={2}>
             <TextField 
               variant='outlined'
               fullWidth
+              label="Item Name"
               value={itemName}
               onChange={(e) => setItemName(e.target.value)} 
             />
             <Button 
-              variant='outlined' 
-              onClick={()=>{
-                addItem(itemName)
-                setItemName('')
-                handleClose()
-            }}  
+              variant='contained' 
+              onClick={handleAddItem}
+              sx={{
+                backgroundColor: '#1976d2',
+                '&:hover': {
+                  backgroundColor: '#115293',
+                },
+              }}
             >
               Add
             </Button>
@@ -142,86 +140,133 @@ export default function Home() {
       </Modal>
 
       {/* Button to open the modal for adding a new item */}
-      <Button variant="contained" onClick={()=>{
-        handleOpen()
-      }}
+      <Button 
+        variant="contained" 
+        onClick={handleOpen}
+        sx={{
+          backgroundColor: '#1976d2',
+          '&:hover': {
+            backgroundColor: '#115293',
+          },
+          padding: '0.5rem 2rem',
+          fontSize: '1rem',
+        }}
       >
         Add New Item
       </Button>
       
       {/* Search bar to filter inventory items */}
-      <Stack width='800px' direction='row' spacing={2} mb={2}>
+      <Stack width='100%' maxWidth='800px' direction='row' spacing={2} mb={2}>
         <TextField
           variant='outlined'
           fullWidth
           placeholder='Search items...'
           value={searchTerm}
           onChange={handleSearchChange}
+          sx={{
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: '#1976d2',
+              },
+              '&:hover fieldset': {
+                borderColor: '#42a5f5',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#42a5f5',
+              },
+            },
+          }}
         />
       </Stack>
 
       {/* Inventory list display */}
-      <Box border='1px solid #333'>
+      <Box
+        border='1px solid #e0e0e0'
+        borderRadius="8px"
+        overflow="hidden"
+        width="100%"
+        maxWidth="800px"
+      >
         <Box 
-          width="800px" 
-          height="100px"
-          bgcolor="#ADD8E6" 
+          bgcolor="#1976d2" 
+          p={2}
           display="flex"
-          alignItems="center" 
           justifyContent="center"
         >
-          <Typography variant='h2' color='#333'>
+          <Typography variant='h4' color='#ffffff'>
             Inventory Items
           </Typography>
         </Box>
-      <Stack width="800px" height="300px" spacing={2} overflow="auto">
-        {filteredInventory.map(({name, quantity}) => (
-            <Box 
-            key={name} 
-            width="100%"
-            minHeight="150px"
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            bgColor = '#f0f0f0'
-            padding={5}
+        <Stack
+          width="100%"
+          height="300px"
+          spacing={2}
+          overflow="auto"
+          sx={{
+            padding: '1rem',
+            backgroundColor: '#fafafa',
+          }}
+        >
+          {filteredInventory.map(({name, quantity}) => (
+            <Paper
+              key={name} 
+              elevation={3}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1rem',
+                borderRadius: '8px',
+                backgroundColor: '#ffffff',
+                '&:hover': {
+                  boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
+                },
+              }}
             >
               <Typography 
-                variant="h3" 
+                variant="h5" 
                 color="#333" 
-                textAlign="center"
               >
                 {name.charAt(0).toUpperCase() + name.slice(1)}
               </Typography>
               <Typography
-                variant="h3" 
-                color="#333" 
-                textAlign="center"
+                variant="h6" 
+                color="#666"
               >
                 {quantity}
               </Typography>
               <Stack direction="row" spacing={2}>
-              <Button 
-                variant='contained' 
-                onClick={()=>{
-                  addItem(name)
-                }}
-              >
-                Add
-              </Button>
-              <Button 
-                variant='contained' 
-                onClick={()=>{
-                  removeItem(name)
-                }}
-              >
-                Remove
-              </Button>
+                <Button 
+                  variant='contained' 
+                  onClick={() => addItem(name)}
+                  sx={{
+                    backgroundColor: '#4caf50',
+                    '&:hover': {
+                      backgroundColor: '#388e3c',
+                    },
+                  }}
+                >
+                  Add
+                </Button>
+                <Button 
+                  variant='contained' 
+                  onClick={() => removeItem(name)}
+                  sx={{
+                    backgroundColor: '#f44336',
+                    '&:hover': {
+                      backgroundColor: '#d32f2f',
+                    },
+                  }}
+                >
+                  Remove
+                </Button>
               </Stack>
-            </Box>
+            </Paper>
           ))}
         </Stack>
       </Box>
     </Box>
-  )
+  );
 }
